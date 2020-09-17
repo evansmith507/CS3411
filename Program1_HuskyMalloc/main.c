@@ -12,20 +12,69 @@
  *	This file will not be graded. When grading I will replace main 
  *	with my own implementation for testing.*/
 int main(int argc, char *argv[]){
-	int temp = 8;
-	void* pointer = &temp;
-	printf(" pointer 1: %p\n", pointer);
-	pointer = pointer + 2;
-	printf(" pointer 2: %p\n", pointer);
-	//temp = (int) pointer;
-	//printf(" temp : 0x%x", temp);
+	
+	//test 1 test traverse and basic functions
+	void* first32 = hmalloc(32);
+	void* second20 = hmalloc(20);
+	void* thrid16 = hmalloc(16);
+	hfree(second20);
+	hfree(first32);
+	hfree(thrid16);
+	//should line free_list => 16 -> 32 -> 20
+
+	//test 2 test that bigger memory sections are overpassed
+	/*
+	void* first = hmalloc(4);
+	hfree(first);
+	void* second = hmalloc(10);
+	*/
+
+	//test 3 remove head from freelist
+	/*
+	void* first = hmalloc(1);
+	void* second = hmalloc(2);
+	void* third = hmalloc(30);
+	hfree(first);
+	hfree(second);
+	hfree(third);
+	void* test = hmalloc(20);
+	*/
+
+	//test 4 remove last element 
+	/*
+	void* first = hmalloc(1);
+	void* second = hmalloc(2);
+	void* third = hmalloc(30);
+	hfree(third);
+	hfree(first);
+	hfree(second);
+	void* test = hmalloc(20);
+	*/
+
+	//test 5 remove only element
+	/*
+	void* third = hmalloc(30);
+	hfree(third);
+	void* test = hmalloc(20);
+	//printf("test: %x \n", test);
+	*/
+
+	//test 6 test calloc
+	/*
+	void* first = hmalloc(10);
+	hfree(first);
+	char* thing = hcalloc(5);
+	for(int i = 0; i < 10; i++){ //test full 10 secion despite not acttually being that large
+		printf("thing[%d] has value %X \n", i, thing[i]);
+	}
+	*/	
+
+	//test 7 reallocate exact amount
+	
+	//void* third = hmalloc(30);
+	//hfree(third);
+	//void* re = hmalloc(30);
 	
 
-	//printf(" hmalloc return %p \n", hmalloc(5));
-	
-	void* point = sbrk(32);
-	int test = ( (point + 32) == sbrk(0) );
-	printf("%d \n", test);
-	printf("%p \n", sbrk(0));
-	return 1;
+	traverse();
 }
