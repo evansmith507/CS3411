@@ -121,11 +121,12 @@ void *hcalloc(int bytes_to_allocate){
 	int size = *temp; //get size of allocated size 
 	char* pointerData = (char*) (temp + 2); //increment to actual pointer data
 	//clear all data 
-	for(int i = 0; i < size; i++){
+	int i = 0;
+	for(i = 0; i < size; i++){
 		pointerData[i] = 0; //go through each byte and clear it
 	}
 	
-   return pointer+8; //hide metadata
+   return pointer; //pointer should already be corret location
 }
 
 /* hfree
@@ -139,7 +140,7 @@ void hfree(void *ptr){
 	ptr = ptr - 8; //bring back metadata
 	//int fullSize = *((int*) ptr) + 8;
 	//if(sbrk(0)==(ptr + fullSize)){ //if breakpoint is equal to last address simply get rid of 
-	//	sbrk(-1 * fullSize);  //deallocate memory of end 
+	//	sbrk(-1 * fullSize);  //deallocate memory off end 
 	//}else{
 		if(free_list == NULL){ //if free_list is empty then set to first one
 			free_list = ptr;
