@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
 	 */
 	printf("argc: %d \n", argc);
 	if(argc <= 1){ //no argument found
-		printf("No argurment present, \n To run program: %s <filename> \n", argv[0]);
+		printf("No argurment present, To run program: %s <filename> \n", argv[0]);
 		exit(1);
 		return 0;
 	}
@@ -48,12 +48,14 @@ int main(int argc, char *argv[]){
 	int binaryFileHandle = open(argv[1], O_RDONLY);
 	printf("opened \n");
 	printf("file name: %s \n", argv[1]);
+	
 	char* filename = argv[1];
 	char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename) + 1 ); //
 	strcpy(indexerFileName, ".rinx.");
 	strcat(indexerFileName, filename); //make new file name
 	printf("New file Name is: %s \n", indexerFileName);
-	int recordFileHandle = open(indexerFileName, O_RDWR | O_CREAT | O_APPEND);
+	
+	int recordFileHandle = open(indexerFileName, O_RDWR | O_CREAT | O_APPEND, S_IRWXU | S_IRWXG | S_IRWXO);
 	int readReturn;
 	int writeReturn;
 	unsigned int recordFileIndexSize = 0;
