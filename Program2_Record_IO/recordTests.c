@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
 	rio_write(fd, "THis Is rad", 11);
 	rio_write(fd, "THis Is dumb", 12);
 	rio_lseek(fd, 1, SEEK_SET);
-	rio_write(fd, "exactlySame", 11);
+	rio_write(fd, "exactly", 7);
 
 	rio_lseek(fd, 0, SEEK_SET);
 	int readResult;

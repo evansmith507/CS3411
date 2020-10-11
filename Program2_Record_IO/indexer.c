@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
 	 * This convention conveniently hides the index files while
 	 * permitting easy access to them based on the data file name. 
 	 */
-	printf("argc: %d \n", argc);
+	//printf("argc: %d \n", argc);
 	if(argc <= 1){ //no argument found
 		printf("No argurment present, To run program: %s <filename> \n", argv[0]);
 		exit(1);
@@ -46,14 +46,14 @@ int main(int argc, char *argv[]){
 
 	//open and create files
 	int binaryFileHandle = open(argv[1], O_RDONLY);
-	printf("opened \n");
-	printf("file name: %s \n", argv[1]);
+	//printf("opened \n");
+	//printf("file name: %s \n", argv[1]);
 	
 	char* filename = argv[1];
 	char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename)); //
 	strcpy(indexerFileName, ".rinx.");
 	strcat(indexerFileName, filename); //make new file name
-	printf("New file Name is: %s \n", indexerFileName);
+	//printf("New file Name is: %s \n", indexerFileName);
 	
 	int recordFileHandle = open(indexerFileName, O_RDWR | O_CREAT | O_APPEND, S_IRWXU | S_IRWXG | S_IRWXO);
 	int readReturn;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
 		while(1){
 			readReturn = read(binaryFileHandle, Sizebuff, 1);
 			if(Sizebuff[0] == '\n'){
-				printf("found line feed \n");
+				//printf("found line feed \n");
 				size++; // keeping track of line feed may cause problems (btw it totally does)
 				break;
 			}
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
 		
 		//check for error/end of file
 		if(readReturn < 0){ //error returned
-			printf("Error reading: \n");
+			//printf("Error reading: \n");
 			break;
 		}else if(readReturn == 0){ //no bytes read (aka end of file)
 			break;
@@ -99,11 +99,14 @@ int main(int argc, char *argv[]){
 
 		//write new record_descriptor to file
 		writeReturn = write(recordFileHandle, &newRecord, sizeof(newRecord)); //&newRecord may cause issues as its just a pointer to it
+		if(writeReturn == -1){
+			printf("Error writing");
+		}
 		//char lineCarragebuff[1] = '\n';
-		printf("writen bytes: %d \n", writeReturn);
+		//printf("writen bytes: %d \n", writeReturn);
 		//int eff = write(recordFileHandle, lineCarragebuff, 1); 
-		printf("What was writen %d, %d \n", *((int*)(&newRecord)), *((int*)(&newRecord) + 1));
-		printf("Record Descriptor: Lenght: %d : Position: %d \n", newRecord.length, newRecord.position);
+		//printf("What was writen %d, %d \n", *((int*)(&newRecord)), *((int*)(&newRecord) + 1));
+		//printf("Record Descriptor: Lenght: %d : Position: %d \n", newRecord.length, newRecord.position);
 	}
 	
 	

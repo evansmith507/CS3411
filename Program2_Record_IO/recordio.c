@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stddef.h>
-
+//JAKE MULLER
 /* You must use this struct when constructing records. It is
  * expected that all binary data in the index file will follow
  * this format. Do not modify the struct.
@@ -42,7 +42,7 @@ int rio_open(const char *pathname, int flags, mode_t mode){
 		char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename) ); //
 		strcpy(indexerFileName, ".rinx.");
 		strcat(indexerFileName, filename); //make new file name
-		printf("file name: %s Flags: %d Mode: %d \n", indexerFileName, flags, mode);
+		//printf("file name: %s Flags: %d Mode: %d \n", indexerFileName, flags, mode);
 		int recordFileDescriptor = open(indexerFileName, flags, mode); //get indexerFileDescriptor
 		if(recordFileDescriptor == -1){
 			printf("fail on record open:\n");
@@ -112,8 +112,6 @@ void *rio_read(int fd, int *return_value){
  * an existing record, read the record_descriptor, check to see if the new 
  * record fits in the allocated area and rewrite. Return an error otherwise.
  */
-//WRITE NEEDS BIG WORK
-//
 int rio_write(int fd, const void*buf, int count){
 
 	int recordFileDescriptor;
@@ -147,7 +145,7 @@ int rio_write(int fd, const void*buf, int count){
 		int length = *((int*) buff + 1); //get length of record.
 		int savePosition = *((int*) buff);
 		if(count > length){ //if new buffer is longer than old buffer return error
-			printf("Buffer is longer than allocated space can hold: Bytes requested: %d, Bytes Avalible: %d \n", count, length);
+			//printf("Buffer is longer than allocated space can hold: Bytes requested: %d, Bytes Avalible: %d \n", count, length);
 			return -1;
 		}
 
@@ -191,7 +189,7 @@ int rio_lseek(int fd, int offset, int whence){
 	int dataFileDescriptor;
 	decriptDescriptors(fd, &dataFileDescriptor, &recordFileDescriptor);
 
-	//RIO LSEEK USED TO BE COMMENTED BUT I DELETED ALL OF IT BY ACCIDENT SO YOU DONT GET ANY NOW
+	//RIO_LSEEK USED TO BE COMMENTED BUT I DELETED ALL MY CODE AND COULDNT GET LSEEK BACK SO YOU DONT GET ANY NOW
 	int position = -1;
 	if(whence == SEEK_SET || SEEK_END || SEEK_CUR){
 		int saveDataPoisition = lseek(dataFileDescriptor, 0, SEEK_CUR);
