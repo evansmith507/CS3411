@@ -13,6 +13,7 @@
  * but it will also produce an executable named recordio which uses
  * the main function declared here.
  */
+
 int main(int argc, char *argv[]){
 	
 
@@ -37,6 +38,8 @@ int main(int argc, char *argv[]){
 	//	printf("Read: %s \n", row);
 	//}
 
+	
+
 	//--------------------------------
 	// Test Writes on new folder
 	//--------------------------------
@@ -49,7 +52,8 @@ int main(int argc, char *argv[]){
 
 	rio_lseek(fd, 0, SEEK_SET);
 	int readResult;
-	for(int i = 0; i < 3; i++){
+	int i = 0;
+	for(i = 0; i < 3; i++){
 		char* row = rio_read(fd, &readResult);
 		printf("Bytes Read: %d \n", readResult);
 		printf("Read: %s \n", row);
@@ -57,7 +61,7 @@ int main(int argc, char *argv[]){
 
 
 	//-------------------------------
-	// Test Opening two files at once
+	// Test Opening two files at once ->(./testio <NewFile> , <File with existing .rinx. file>)
 	//-------------------------------
 	int fd2 = rio_open(argv[2], O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 	if(fd == -1){
@@ -65,7 +69,7 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 	
-	for(int i = 0; i < 3; i++){
+	for(i = 0; i < 3; i++){
 		char* row = rio_read(fd2, &readResult);
 		printf("Bytes Read: %d \n", readResult);
 		printf("Read: %s \n", row);
@@ -73,5 +77,6 @@ int main(int argc, char *argv[]){
 
 
 	rio_close(fd);
+	rio_close(fd2);
 	return 0;
 }

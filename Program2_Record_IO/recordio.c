@@ -34,7 +34,7 @@ int rio_open(const char *pathname, int flags, mode_t mode){
 		
 		int dataFileDescriptor = open(pathname, flags, mode);
 		if(dataFileDescriptor == -1){ //check for error
-			printf("fail on data open:\n");
+			//printf("fail on data open:\n");
 			return -1; //return error if error
 		}
 		//find record file
@@ -45,7 +45,7 @@ int rio_open(const char *pathname, int flags, mode_t mode){
 		//printf("file name: %s Flags: %d Mode: %d \n", indexerFileName, flags, mode);
 		int recordFileDescriptor = open(indexerFileName, flags, mode); //get indexerFileDescriptor
 		if(recordFileDescriptor == -1){
-			printf("fail on record open:\n");
+			//printf("fail on record open:\n");
 			return -1; //return error if error
 		}
 		free(indexerFileName); //free indexerFileName
@@ -122,7 +122,7 @@ int rio_write(int fd, const void*buf, int count){
 	int readReturn = read(recordFileDescriptor, buff, sizeof(struct record_descriptor));
 	int writeReturn = -1;
 	if(readReturn == -1){ //if recordFile Fails to read
-		printf("record file read fail: within write");
+		//printf("record file read fail: within write");
 		return -1;
 	}else if(readReturn == 0 ){ //create new record
 		struct record_descriptor newRecord;
@@ -189,46 +189,51 @@ int rio_lseek(int fd, int offset, int whence){
 	int dataFileDescriptor;
 	decriptDescriptors(fd, &dataFileDescriptor, &recordFileDescriptor);
 
-	//RIO_LSEEK USED TO BE COMMENTED BUT I DELETED ALL MY CODE AND COULDNT GET LSEEK BACK SO YOU DONT GET ANY NOW
+	//RIO_LSEEK USED TO BE COMMENTED BETTER BUT I DELETED ALL MY CODE AND COULDNT GET LSEEK BACK SO YOU DONT GET ANY NOW
 	int position = -1;
 	if(whence == SEEK_SET || SEEK_END || SEEK_CUR){
-		int saveDataPoisition = lseek(dataFileDescriptor, 0, SEEK_CUR);
+		//save positions
+		int saveDataPoisition = lseek(dataFileDescriptor, 0, SEEK_CUR); 
 		int saveRecordPoisition = lseek(recordFileDescriptor, 0 , SEEK_CUR);
+		//get current position
 		position = lseek(recordFileDescriptor, 0 , whence);
 		if(position == -1){
 			return -1;
 		}
 
-		position = (position / 8) + offset;
-		if(position < 0  || position > (lseek(dataFileDescriptor, 0, SEEK_END) / 8)){
+		//get current offset 
+		position = (position / 8) + offset; 
+		if(position < 0  || position > (lseek(dataFileDescriptor, 0, SEEK_END) / 8)){	//if offset is out of bounds return error
 			lseek(recordFileDescriptor, saveRecordPoisition, SEEK_SET);
 			lseek(dataFileDescriptor, saveDataPoisition, SEEK_SET);
 			return -1;
 		}
 
+		//set record file back
 		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}
 
+		//read descriptor
 		char* buff[8];
 		int readResult = read(recordFileDescriptor, buff, 8);
 		int dataPosition = 0;
-
+		//check descriptor
 		if(readResult < 0){
 			return -1;
 		}else if(readResult == 0){
-			dataPosition = lseek(recordFileDescriptor, 0, SEEK_END);
+			dataPosition = lseek(recordFileDescriptor, 0, SEEK_END); //if it as end of file set data position to end of file
 		}else{
-			dataPosition = *((int*)buff);
+			dataPosition = *((int*)buff);	//set data position
 		}
 		
-		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}
+		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}	//set record to proper position
 
-		if(lseek(dataFileDescriptor, dataPosition, SEEK_SET) == -1){return -1;}
+		if(lseek(dataFileDescriptor, dataPosition, SEEK_SET) == -1){return -1;}	//set data to proper position
 
 
 	}else{
 		return -1;
 	}
-	return position; //replace with correct return value
+	return position; 
 }
 
 /* rio_close

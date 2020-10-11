@@ -7,6 +7,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+//Email screenshot of specifications i was told about
+//https://cdn.discordapp.com/attachments/698210140779839609/764663699754582046/unknown.png
+
+
 /* You must use this struct when constructing records. It is
  * expected that all binary data in the index file will follow
  * this format. Do not modify the struct.

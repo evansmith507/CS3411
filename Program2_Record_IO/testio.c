@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 
-		printf("Data File                          Index file \n");
+		printf("Data File                          \n");
 		printf("--------------------------------------------------- \n");
 		int readReturn;
 		char* stringReturn;
@@ -60,9 +60,13 @@ int main(int argc, char *argv[]){
 			}else if(readReturn == 0){
 				break;
 			}else{
+				//print String
 				printf("%-35s", stringReturn);
-				printf("%d,%d \n", position, readReturn);
-				position = position + readReturn;
+				//print index data 
+				//https://cdn.discordapp.com/attachments/755913763827351692/764722500713185380/Capture.PNG
+				//printf("%d,%d ", position, readReturn); //emails from tino state that this is not needed?? Please enable if otherwise
+				printf("\n");
+				position = position + readReturn; //updates position as if they were right behind each other
 			}
 
 		}
