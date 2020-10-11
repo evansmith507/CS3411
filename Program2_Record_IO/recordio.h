@@ -5,3 +5,5 @@ void *rio_read(int fd, int *return_value);
 int rio_write(int fd, const void*buf, int count);
 int rio_lseek(int fd, int offset, int whence);
 int rio_close(int fd);
+int combineDescriptors(int data, int indexer);
+void decriptDescriptors(int fd, int* data, int* indexer);

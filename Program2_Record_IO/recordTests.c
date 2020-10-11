@@ -15,21 +15,6 @@
  */
 int main(int argc, char *argv[]){
 	
-		/*
-	int fd = open(".rinx.Test.txt", O_RDWR);
-	char buff[8]; 
-	lseek(fd, 0, SEEK_SET);
-	int result = read(fd, buff, 8);
-	if(result == -1){
-		printf("BAD \n");
-	}
-	printf("Hex Buffer: %X %X %X %X %X %X %X %X \n", buff[0], buff[1],buff[2],buff[3],buff[4],buff[5],buff[6],buff[7] );
-	struct record_descriptor returnRecord;
-	returnRecord.position = *((int*) buff);
-	returnRecord.length = *((int*) buff + 1);
-	printf("Record Descriptor: Lenght: %d : Position: %d \n", returnRecord.length, returnRecord.position);
-	*/
-	
 
 
 
@@ -38,46 +23,55 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 
-	int fd = rio_open(argv[1], O_RDWR, 777);
+	int fd = rio_open(argv[1], O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 	if(fd == -1){
 		printf("Open Fail \n");
 		exit(0);
 	}
+
+	
+	//int readResult;
+	//for(int i = 0; i < 3; i++){
+	//	char* row = rio_read(fd, &readResult);
+	//	printf("Bytes Read: %d \n", readResult);
+	//	printf("Read: %s \n", row);
+	//}
+
+	//--------------------------------
+	// Test Writes on new folder
+	//--------------------------------
+	
+	rio_write(fd, "THis Is COol", 12);
+	rio_write(fd, "THis Is rad", 11);
+	rio_write(fd, "THis Is dumb", 12);
+	rio_lseek(fd, 1, SEEK_SET);
+	rio_write(fd, "exactlySame", 11);
+
+	rio_lseek(fd, 0, SEEK_SET);
 	int readResult;
-	for(int i = 0; i < 2; i++){
+	for(int i = 0; i < 3; i++){
 		char* row = rio_read(fd, &readResult);
 		printf("Bytes Read: %d \n", readResult);
 		printf("Read: %s \n", row);
 	}
-	
-	
-	char* str = "No THIS"; //7 characters (8 with null pointer) 
-	int writeResult = rio_write(fd, str, 8);
-	printf("WriteResult: %d \n", writeResult);
 
-	
-	printf("Continue Reading from start\n\n");
-	rio_lseek(fd, 0, SEEK_SET); //reset 
-	for(int i = 0; i < 5; i++){
-		char* nrow = rio_read(fd, &readResult);
-		printf("Bytes Read: %d \n", readResult);
-		printf("Read: %s \n", nrow);
+
+	//-------------------------------
+	// Test Opening two files at once
+	//-------------------------------
+	int fd2 = rio_open(argv[2], O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+	if(fd == -1){
+		printf("Open Fail \n");
+		exit(0);
 	}
 	
-	str = "This on is gonna be reallly long to test this"; //7 characters (8 with null pointer) 
-	writeResult = rio_write(fd, str, strlen(str)+2);
-	printf("WriteResult: %d \n", writeResult);
-
-	printf("Continue Reading from start\n\n");
-	rio_lseek(fd, 0, SEEK_SET); //reset 
-	for(int i = 0; i < 5; i++){
-		char* nrow = rio_read(fd, &readResult);
+	for(int i = 0; i < 3; i++){
+		char* row = rio_read(fd2, &readResult);
 		printf("Bytes Read: %d \n", readResult);
-		printf("Read: %s \n", nrow);
+		printf("Read: %s \n", row);
 	}
 
-	
-	
-	
+
+	rio_close(fd);
 	return 0;
 }

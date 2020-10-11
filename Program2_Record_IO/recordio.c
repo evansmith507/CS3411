@@ -13,7 +13,7 @@
  * this format. Do not modify the struct.
  */
 
-int recordFileDescriptor;
+//int recordFileDescriptor;
 struct record_descriptor
 {
 	int position; //byte offset relative to the beginning of the data file
@@ -31,6 +31,7 @@ struct record_descriptor
 int rio_open(const char *pathname, int flags, mode_t mode){
 		
 		
+		
 		int dataFileDescriptor = open(pathname, flags, mode);
 		if(dataFileDescriptor == -1){ //check for error
 			printf("fail on data open:\n");
@@ -41,14 +42,14 @@ int rio_open(const char *pathname, int flags, mode_t mode){
 		char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename) ); //
 		strcpy(indexerFileName, ".rinx.");
 		strcat(indexerFileName, filename); //make new file name
-		printf("file name: %s \n", indexerFileName);
-		recordFileDescriptor = open(indexerFileName, flags, mode); //get indexerFileDescriptor
+		printf("file name: %s Flags: %d Mode: %d \n", indexerFileName, flags, mode);
+		int recordFileDescriptor = open(indexerFileName, flags, mode); //get indexerFileDescriptor
 		if(recordFileDescriptor == -1){
 			printf("fail on record open:\n");
 			return -1; //return error if error
 		}
 		free(indexerFileName); //free indexerFileName
-		return dataFileDescriptor; //return file descriptor
+		return combineDescriptors(dataFileDescriptor, recordFileDescriptor); //return file descriptor
 		
 }
 
@@ -61,6 +62,9 @@ int rio_open(const char *pathname, int flags, mode_t mode){
  * should be communicated to the caller through return_value.
  */
 void *rio_read(int fd, int *return_value){
+	int recordFileDescriptor;
+	int dataFileDescriptor;
+	decriptDescriptors(fd, &dataFileDescriptor, &recordFileDescriptor);
 	char buff[8];
 	int readResult = read(recordFileDescriptor, buff, 8); //get record
 	
@@ -77,8 +81,12 @@ void *rio_read(int fd, int *return_value){
 	record.position = *((int*) buff);
 	record.length = *((int*) buff + 1);
 	char* resultBuff = malloc(record.length +1); 
-	//char resultBuff[record.length + 1];
-	readResult = read(fd, resultBuff, record.length);
+	//set data file to correct position
+	if(lseek(dataFileDescriptor, record.position, SEEK_SET) == -1){
+		*return_value = -1;
+		return NULL;	
+	}
+	readResult = read(dataFileDescriptor, resultBuff, record.length);
 	
 	//if read has issues return error
 	if(readResult == -1){
@@ -87,11 +95,11 @@ void *rio_read(int fd, int *return_value){
 	}
 
 	//THIS GETS RID OF LINE FEEDS AT THE END OF READS - SUPPOSEDLY THEY CAN STAY
-	//if(resultBuff[record.length-1] == '\n'){
-	//		resultBuff[record.length-1] = '\0'; //if last element is a line feed set to null termination so when printing it doenst print a line feed
-	//}
+	if(resultBuff[record.length-1] == '\n'){
+			resultBuff[record.length-1] = '\0'; //if last element is a line feed set to null termination so when printing it doenst print a line feed
+	}
 	resultBuff[record.length] = '\0'; //add null terminator to end of buffer 
-
+	
 	//set return values
 	*return_value = readResult;
 	return resultBuff; //send back correct buffer
@@ -105,8 +113,12 @@ void *rio_read(int fd, int *return_value){
  * record fits in the allocated area and rewrite. Return an error otherwise.
  */
 //WRITE NEEDS BIG WORK
+//
 int rio_write(int fd, const void*buf, int count){
 
+	int recordFileDescriptor;
+	int dataFileDescriptor;
+	decriptDescriptors(fd, &dataFileDescriptor, &recordFileDescriptor);
 	//get current position  
 	char buff[8];
 	int readReturn = read(recordFileDescriptor, buff, sizeof(struct record_descriptor));
@@ -117,11 +129,11 @@ int rio_write(int fd, const void*buf, int count){
 	}else if(readReturn == 0 ){ //create new record
 		struct record_descriptor newRecord;
 		newRecord.length = count;
-		int postion = lseek(fd, 0, SEEK_CUR); //get current position
+		int postion = lseek(dataFileDescriptor, 0, SEEK_CUR); //get current position
 		newRecord.position = postion; //hopfully this works
 
 		//write both files
-		 writeReturn = write(fd, buf, count); //write data file
+		 writeReturn = write(dataFileDescriptor, buf, count); //write data file
 		if(writeReturn == -1){
 			return -1; //error writing
 		}
@@ -133,22 +145,33 @@ int rio_write(int fd, const void*buf, int count){
 	}else{ //replace record
 		
 		int length = *((int*) buff + 1); //get length of record.
+		int savePosition = *((int*) buff);
 		if(count > length){ //if new buffer is longer than old buffer return error
 			printf("Buffer is longer than allocated space can hold: Bytes requested: %d, Bytes Avalible: %d \n", count, length);
 			return -1;
 		}
 
 		//write new data
-		writeReturn = write(fd, buf, count);
+		writeReturn = write(dataFileDescriptor, buf, count);
 		if(writeReturn == -1){
 			return -1;
 		}
-		int leftover = length - count;
-		if(leftover > 0){ //if there is extra buffer space open clear it out
-			char* leftBuff = calloc(leftover, sizeof(char));
-			writeReturn = write(fd, leftBuff, leftover); //clear rest of record and postion properly
-			free(leftBuff);
-		} 
+		//TODO: REPLACE RECORD LENGHT AS IT IS SHORTER NOW
+		struct record_descriptor newRecord;
+		newRecord.length = count;
+		newRecord.position = savePosition;
+		//move indexer back to correct position
+		if(lseek(recordFileDescriptor, -8, SEEK_CUR) == -1) {return -1;}
+		if(write(recordFileDescriptor, &newRecord, 8)); //write indexer on top 
+
+
+		//THIS WILL NEED TO BE REMOVED
+		//int leftover = length - count;
+		//if(leftover > 0){ //if there is extra buffer space open clear it out
+		//	char* leftBuff = calloc(leftover, sizeof(char));
+		//	writeReturn = write(fd, leftBuff, leftover); //clear rest of record and postion properly
+		//	free(leftBuff);
+		//} 
 	}
 
 	return count; 
@@ -162,25 +185,48 @@ int rio_write(int fd, const void*buf, int count){
  *
  */
 int rio_lseek(int fd, int offset, int whence){
+	
+
+	int recordFileDescriptor;
+	int dataFileDescriptor;
+	decriptDescriptors(fd, &dataFileDescriptor, &recordFileDescriptor);
+
+	//RIO LSEEK USED TO BE COMMENTED BUT I DELETED ALL OF IT BY ACCIDENT SO YOU DONT GET ANY NOW
 	int position = -1;
-	if(whence == SEEK_SET){
-		position = whence;
-		lseek(recordFileDescriptor, whence * sizeof(struct record_descriptor), SEEK_SET); //set postion
-		//find data file poistion
+	if(whence == SEEK_SET || SEEK_END || SEEK_CUR){
+		int saveDataPoisition = lseek(dataFileDescriptor, 0, SEEK_CUR);
+		int saveRecordPoisition = lseek(recordFileDescriptor, 0 , SEEK_CUR);
+		position = lseek(recordFileDescriptor, 0 , whence);
+		if(position == -1){
+			return -1;
+		}
+
+		position = (position / 8) + offset;
+		if(position < 0  || position > (lseek(dataFileDescriptor, 0, SEEK_END) / 8)){
+			lseek(recordFileDescriptor, saveRecordPoisition, SEEK_SET);
+			lseek(dataFileDescriptor, saveDataPoisition, SEEK_SET);
+			return -1;
+		}
+
+		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}
+
 		char* buff[8];
 		int readResult = read(recordFileDescriptor, buff, 8);
-		if(readResult == -1){
-			return -1; //error reading
+		int dataPosition = 0;
+
+		if(readResult < 0){
+			return -1;
+		}else if(readResult == 0){
+			dataPosition = lseek(recordFileDescriptor, 0, SEEK_END);
+		}else{
+			dataPosition = *((int*)buff);
 		}
-		int dataPosition = *((int*) buff); //get the data position
-		//send record file back to proper spot
-		lseek(recordFileDescriptor, whence * sizeof(struct record_descriptor), SEEK_SET); //set postion
-		//send data file to proper spot
-		lseek(fd, dataPosition, SEEK_SET);
-	}else if(whence == SEEK_END){
-		printf("NOT DONE YET \n");
-	}else if(whence == SEEK_CUR){ 
-		printf("NOT DONE YET \n");
+		
+		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}
+
+		if(lseek(dataFileDescriptor, dataPosition, SEEK_SET) == -1){return -1;}
+
+
 	}else{
 		return -1;
 	}
@@ -195,7 +241,10 @@ int rio_lseek(int fd, int offset, int whence){
  * abstraction and associate them.
  */
 int rio_close(int fd){
-	int closeReturn = close(fd);
+	int recordFileDescriptor;
+	int dataFileDescriptor;
+	decriptDescriptors(fd, &dataFileDescriptor, &recordFileDescriptor);
+	int closeReturn = close(dataFileDescriptor);
 	if(closeReturn == -1){
 		return -1;
 	}
@@ -204,4 +253,15 @@ int rio_close(int fd){
 		return -1;
 	}
 	return 0; //replace with correct return value
+}
+
+
+
+int combineDescriptors(int data, int indexer){
+	return ((indexer << 16) | data);
+}
+
+void decriptDescriptors(int fd, int* data, int* indexer){
+	*data = fd & 0xffff;
+	*indexer = fd >> 16;
 }

@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
 	printf("file name: %s \n", argv[1]);
 	
 	char* filename = argv[1];
-	char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename) + 1 ); //
+	char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename)); //
 	strcpy(indexerFileName, ".rinx.");
 	strcat(indexerFileName, filename); //make new file name
 	printf("New file Name is: %s \n", indexerFileName);
@@ -106,6 +106,6 @@ int main(int argc, char *argv[]){
 		printf("Record Descriptor: Lenght: %d : Position: %d \n", newRecord.length, newRecord.position);
 	}
 	
-
+	
 	return 0;
 }
