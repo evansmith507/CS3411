@@ -87,11 +87,12 @@ void *rio_read(int fd, int *return_value){
 	}
 
 	//THIS GETS RID OF LINE FEEDS AT THE END OF READS - SUPPOSEDLY THEY CAN STAY
-	//if(resultBuff[record.length-1] == '\n'){
-	//		resultBuff[record.length-1] = '\0'; //if last element is a line feed set to null termination so when printing it doenst print a line feed
-	//}
+	if(resultBuff[record.length-1] == '\n'){
+			resultBuff[record.length-1] = '\0'; //if last element is a line feed set to null termination so when printing it doenst print a line feed
+	}
 	resultBuff[record.length] = '\0'; //add null terminator to end of buffer 
 
+	free(resultBuff);
 	//set return values
 	*return_value = readResult;
 	return resultBuff; //send back correct buffer
@@ -106,6 +107,7 @@ void *rio_read(int fd, int *return_value){
  */
 //WRITE NEEDS BIG WORK
 int rio_write(int fd, const void*buf, int count){
+
 
 	//get current position  
 	char buff[8];
@@ -162,25 +164,43 @@ int rio_write(int fd, const void*buf, int count){
  *
  */
 int rio_lseek(int fd, int offset, int whence){
+	
+	//RIO LSEEK USED TO BE COMMENTED BUT I DELETED ALL OF IT BY ACCIDENT SO YOU DONT GET ANY NOW
 	int position = -1;
-	if(whence == SEEK_SET){
-		position = whence;
-		lseek(recordFileDescriptor, whence * sizeof(struct record_descriptor), SEEK_SET); //set postion
-		//find data file poistion
+	if(whence == SEEK_SET || SEEK_END || SEEK_CUR){
+		int saveDataPoisition = lseek(fd, 0, SEEK_CUR);
+		int saveRecordPoisition = lseek(recordFileDescriptor, 0 , SEEK_CUR);
+		position = lseek(recordFileDescriptor, 0 , whence);
+		if(position == -1){
+			return -1;
+		}
+
+		position = (position / 8) + offset;
+		if(position < 0  || position > (lseek(fd, 0, SEEK_END) / 8)){
+			lseek(recordFileDescriptor, saveRecordPoisition, SEEK_SET);
+			lseek(fd, saveDataPoisition, SEEK_SET);
+			return -1;
+		}
+
+		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}
+
 		char* buff[8];
 		int readResult = read(recordFileDescriptor, buff, 8);
-		if(readResult == -1){
-			return -1; //error reading
+		int dataPosition = 0;
+
+		if(readResult < 0){
+			return -1;
+		}else if(readResult == 0){
+			dataPosition = lseek(recordFileDescriptor, 0, SEEK_END);
+		}else{
+			dataPosition = *((int*)buff);
 		}
-		int dataPosition = *((int*) buff); //get the data position
-		//send record file back to proper spot
-		lseek(recordFileDescriptor, whence * sizeof(struct record_descriptor), SEEK_SET); //set postion
-		//send data file to proper spot
-		lseek(fd, dataPosition, SEEK_SET);
-	}else if(whence == SEEK_END){
-		printf("NOT DONE YET \n");
-	}else if(whence == SEEK_CUR){ 
-		printf("NOT DONE YET \n");
+		
+		if(lseek(recordFileDescriptor, position*8, SEEK_SET) == -1){return -1;}
+
+		if(lseek(fd, dataPosition, SEEK_SET) == -1){return -1;}
+
+
 	}else{
 		return -1;
 	}

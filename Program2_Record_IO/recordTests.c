@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 
-	int fd = rio_open(argv[1], O_RDWR, 777);
+	int fd = rio_open(argv[1], O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
 	if(fd == -1){
 		printf("Open Fail \n");
 		exit(0);
