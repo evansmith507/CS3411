@@ -37,8 +37,36 @@ struct record_descriptor
 
 int main(int argc, char *argv[]){
 	
+	if(argc <= 1){
+		printf("./%s <some_record_file_name> \n", argv[0]);
+		exit(0);
+	}
 
+	int fd = rio_open(argv[1], O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
+	if(fd == -1){
+		printf("Open Fail \n");
+		exit(0);
+	}
 
+		printf("Data File                          Index file \n");
+		printf("--------------------------------------------------- \n");
+		int readReturn;
+		char* stringReturn;
+		int position = 0;
+		while(1){
+			stringReturn = rio_read(fd, &readReturn);
+			if(readReturn < 0){
+				exit(0);
+			}else if(readReturn == 0){
+				break;
+			}else{
+				printf("%-35s", stringReturn);
+				printf("%d,%d \n", position, readReturn);
+				position = position + readReturn;
+			}
+
+		}
+	rio_close(fd);
 	
 	return 0;
 	

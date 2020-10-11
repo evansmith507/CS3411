@@ -31,6 +31,7 @@ struct record_descriptor
 int rio_open(const char *pathname, int flags, mode_t mode){
 		
 		
+		
 		int dataFileDescriptor = open(pathname, flags, mode);
 		if(dataFileDescriptor == -1){ //check for error
 			printf("fail on data open:\n");
@@ -41,8 +42,9 @@ int rio_open(const char *pathname, int flags, mode_t mode){
 		char* indexerFileName = malloc(strlen(".rinx.") + strlen(filename) ); //
 		strcpy(indexerFileName, ".rinx.");
 		strcat(indexerFileName, filename); //make new file name
-		printf("file name: %s \n", indexerFileName);
+		printf("file name: %s Flags: %d Mode: %d \n", indexerFileName, flags, mode);
 		recordFileDescriptor = open(indexerFileName, flags, mode); //get indexerFileDescriptor
+		printf("now here");
 		if(recordFileDescriptor == -1){
 			printf("fail on record open:\n");
 			return -1; //return error if error
@@ -92,7 +94,6 @@ void *rio_read(int fd, int *return_value){
 	}
 	resultBuff[record.length] = '\0'; //add null terminator to end of buffer 
 
-	free(resultBuff);
 	//set return values
 	*return_value = readResult;
 	return resultBuff; //send back correct buffer
@@ -106,6 +107,7 @@ void *rio_read(int fd, int *return_value){
  * record fits in the allocated area and rewrite. Return an error otherwise.
  */
 //WRITE NEEDS BIG WORK
+//
 int rio_write(int fd, const void*buf, int count){
 
 
@@ -145,12 +147,18 @@ int rio_write(int fd, const void*buf, int count){
 		if(writeReturn == -1){
 			return -1;
 		}
-		int leftover = length - count;
-		if(leftover > 0){ //if there is extra buffer space open clear it out
-			char* leftBuff = calloc(leftover, sizeof(char));
-			writeReturn = write(fd, leftBuff, leftover); //clear rest of record and postion properly
-			free(leftBuff);
-		} 
+		//TODO: REPLACE RECORD LENGHT AS IT IS SHORTER NOW
+		
+
+
+
+		//THIS WILL NEED TO BE REMOVED
+		//int leftover = length - count;
+		//if(leftover > 0){ //if there is extra buffer space open clear it out
+		//	char* leftBuff = calloc(leftover, sizeof(char));
+		//	writeReturn = write(fd, leftBuff, leftover); //clear rest of record and postion properly
+		//	free(leftBuff);
+		//} 
 	}
 
 	return count; 
