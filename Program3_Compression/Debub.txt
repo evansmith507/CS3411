@@ -1,0 +1,12 @@
+
+uniqueResult 0 
+uniqueResult 0 
+uniqueResult 2 
+uniqueResult 0 
+uniqueResult 2 
+uniqueResult 0 
+uniqueResult 2 
+uniqueResult 0 
+uniqueResult 2 
+uniqueResult 0 
+uniqueResult 2 
