@@ -25,17 +25,17 @@ void addToBuffer(char* buffer, unsigned int* count, char entry){
 
 char checkUniqueness(char* buffer, unsigned int count, char byteRead){
 	//char result;
-	//int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
-	//char string[200];
+	int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
+	char string[200];
 	
 	for(int i = 0; i < 8; i++){
 
-		//sprintf(string, "Compare, input: %c buffer: %c \n", byteRead, buffer[( count - (i+1) ) % 8]);
-		//write(fd, string, 29);
+		sprintf(string, "Compare, input: %c buffer: %c \n", byteRead, buffer[( count - (i+1) ) % 8]);
+		write(fd, string, 29);
 
 		if(buffer[(count - (i+1)) % 8] == byteRead){
-			//sprintf(string, "Return %d \n", i);
-			//write(fd, string, 10);
+			sprintf(string, "Return %d \n", i);
+			write(fd, string, 10);
 			return i;
 		}
 	}
@@ -124,19 +124,19 @@ int main(int argc, char *argv[]){
 			//************************************************************
 			}else if(byteRead == (char)repeatByte){
 				addToBuffer(buffer, &count, repeatByte);
-				char repeats = 1;
-				while(repeats < 8){
+				char repeats = 0;
+				while(repeats < 7){
 					repeatByte = readByte();
 					
 					if(repeatByte == 258){
 						//end of file
 						break;
 					}
-					addToBuffer(buffer, &count, (char) repeatByte);
 					if((char)repeatByte != byteRead){
 						//stoped repeating
 						break;
 					}
+					addToBuffer(buffer, &count, (char) repeatByte);
 					repeats++;
 				}
 				//write repeating code 
@@ -162,10 +162,10 @@ int main(int argc, char *argv[]){
 			}else{
 				writeBit(0);
 				//write 3 bit count
-				int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
-				char string[200];
-				sprintf(string, "uniqueResult %x \n", uniqueResult);
-				write(fd, string, 16);
+				//int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
+				//char string[200];
+				//sprintf(string, "uniqueResult %x \n", uniqueResult);
+				//write(fd, string, 16);
 				writeBit((0x4 & uniqueResult) >> 2);
 				writeBit((0x2 & uniqueResult) >> 1);
 				writeBit(0x1 & uniqueResult);
