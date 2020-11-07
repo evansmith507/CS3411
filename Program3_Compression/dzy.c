@@ -1,3 +1,4 @@
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,7 +8,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stddef.h>
-
+*/
 
 #include "bitsy.h" //This header includes prototypes for the proposed bit abstractions
 /*Include any additional headers you require*/
@@ -23,9 +24,9 @@ void addToBuffer(char* buffer, unsigned int* count, char entry){
 	*count = *count + 1;
 }
 
-
+/*
 void runBuffer(char* buffer, unsigned int count){
-	//char result;
+	char result;
 	int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
 	char string[200];
 	
@@ -37,6 +38,7 @@ void runBuffer(char* buffer, unsigned int count){
 	write(fd, string, 1);
 	return;
 }
+*/
 
 /* main - dzy de-compression implementation
  * This program decompresses a compressed stream directed at its standard input 
@@ -113,7 +115,7 @@ int main(int argc, char *argv[]){
 				shift = shift | readBit();
 				shift = shift << 1;
 				shift = shift | readBit();
-				for(int i = 0; i <= shift; i++){
+				for(int i = 0; i <= shift /*&& i < 7*/; i++){
 					writeByte(repeatingByte);
 					addToBuffer(buffer, &count, repeatingByte);
 				}
@@ -122,7 +124,8 @@ int main(int argc, char *argv[]){
 				return -1;
 			}
 		}
-
+	//ttttt
+	//oooooooooooooooooooooooooooooooooohhhhhhhhhhhhhhhhhhhh
 		
 	}
 	return 0; //exit status. success=0, error=-1

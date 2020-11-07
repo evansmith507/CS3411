@@ -1,3 +1,6 @@
+//Jake Muller CS3411
+
+/* used for debuging purposes
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,7 +10,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stddef.h>
-
+*/
 #include "bitsy.h" //This header includes prototypes for the proposed bit abstractions
 /*Include any additional headers you require*/
 
@@ -23,19 +26,35 @@ void addToBuffer(char* buffer, unsigned int* count, char entry){
 	*count = *count + 1;
 }
 
-char checkUniqueness(char* buffer, unsigned int count, char byteRead){
+/*
+void runBuffer(char* buffer, unsigned int count){
 	//char result;
 	int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
 	char string[200];
 	
 	for(int i = 0; i < 8; i++){
+		sprintf(string, "buffer: %c \n", buffer[( count - (i+1) ) % 8]);
+		write(fd, string, 11);
+	}
+	sprintf(string, "\n");
+	write(fd, string, 1);
+	return;
+}
+*/
 
-		sprintf(string, "Compare, input: %c buffer: %c \n", byteRead, buffer[( count - (i+1) ) % 8]);
-		write(fd, string, 29);
+char checkUniqueness(char* buffer, unsigned int count, char byteRead){
+	//char result;
+	//int fd = open("Debub.txt", O_RDWR | O_CREAT | O_APPEND);
+	//char string[200];
+	
+	for(int i = 0; i < 8; i++){
+
+		//sprintf(string, "Compare, input: %c buffer: %c \n", byteRead, buffer[( count - (i+1) ) % 8]);
+		//write(fd, string, 29);
 
 		if(buffer[(count - (i+1)) % 8] == byteRead){
-			sprintf(string, "Return %d \n", i);
-			write(fd, string, 10);
+			//sprintf(string, "Return %d \n", i);
+			//write(fd, string, 10);
 			return i;
 		}
 	}
@@ -93,6 +112,7 @@ int main(int argc, char *argv[]){
 
 		//start encoding process 
 		char uniqueResult = checkUniqueness(buffer, count, byteRead);
+		//runBuffer(buffer, count);
 		//************************************************************
 		// Infrequent Data Form
 		//************************************************************
@@ -123,9 +143,10 @@ int main(int argc, char *argv[]){
 			// Repeating Data Form
 			//************************************************************
 			}else if(byteRead == (char)repeatByte){
-				addToBuffer(buffer, &count, repeatByte);
+				addToBuffer(buffer, &count, repeatByte);//add first item
+				addToBuffer(buffer, &count, repeatByte);//add first repeated
 				char repeats = 0;
-				while(repeats < 7){
+				while(repeats < 8){
 					repeatByte = readByte();
 					
 					if(repeatByte == 258){
@@ -137,7 +158,10 @@ int main(int argc, char *argv[]){
 						break;
 					}
 					addToBuffer(buffer, &count, (char) repeatByte);
-					repeats++;
+					repeats++;			
+				}
+				if(repeats == 8){ //captures edge case where increments a last time if next element still repeats
+					repeats = 7;
 				}
 				//write repeating code 
 				writeBit(1);
