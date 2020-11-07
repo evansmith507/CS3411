@@ -1,11 +1,11 @@
 Place your compression ratios/comments here.
 
-Name    | Size (Bytes) | Compressed Size (bytes) | ratio
+Name    | Size (Bytes) | Compressed Size (bytes) | ratio (percent of original size)
 _________________________________________________________________
-czy.c   |     6122     | 
-dzy.c   |     3476     |
-bitsy.c |     4653     | 
-        |
-        |
-        |
+czy.c   |     6122     |           5583          |  91% 
+dzy.c   |     3476     |           3285          |  94%
+bitsy.c |     4653     |           4486          |  96%
+        
+        
+        
 
