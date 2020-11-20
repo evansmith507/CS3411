@@ -1,0 +1,3 @@
+dup2: old 5 new 1, dup2 return: 1
+ end instruction
+
