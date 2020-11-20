@@ -266,7 +266,7 @@ void c_pipe(int conn){
 	int pipefd[2];
 	int error = 0;
 	int pipeReturn = pipe(pipefd);
-	printf("pipefd[0]: %d, pipefd[1]: %d \n", pipefd[0], pipefd[1]);
+	//printf("pipefd[0]: %d, pipefd[1]: %d \n", pipefd[0], pipefd[1]);
 	error = errno;
 	char result[16] = " ";
 	int L = 0;
@@ -308,7 +308,7 @@ void c_dup2(int conn){
 	newfd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 	
 	int dupReturn = dup2(oldfd, newfd);
-	printf("dup2: old %d new %d, dup2 return: %d\n ",oldfd, newfd, dupReturn);
+	//printf("dup2: old %d new %d, dup2 return: %d\n ",oldfd, newfd, dupReturn);
 	error = errno;
 	char result[8] = " ";
 	int L = 0;
@@ -415,7 +415,7 @@ int main(int argc, char *argv[]){
 		//sleep(1);
 	}
 	
-	printf("yeet\n");
+	//printf("yeet\n");
 
 	return 0; // placeholder
 }

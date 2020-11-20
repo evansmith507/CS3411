@@ -1,5 +1,5 @@
 #include "r_client.h"
-#include "pgm.h"
+//#include "pgm.h"
 
 /* Add any includes needed*/
 
@@ -36,18 +36,23 @@ int entry(int argc, char* argv[]){
 	}
 	int local = open(argv[3],  O_RDWR, 0);
 	if(local == -1){ 
-		printf("OPEN FAIL\n");
+		//printf("OPEN FAIL\n");
+		return 0;
 	}
 
 	int remote = r_open(argv[4], O_RDWR | O_APPEND, S_IRWXU | S_IRWXG | S_IRWXO);
 	if(remote == -1){ 
-		printf("OPEN FAIL\n");
+		//printf("OPEN FAIL\n");
+		return 0;
 	}
 	char buf = 0;
 	int readReturn = 0;
 	while(1){
 		readReturn = read(local, &buf, 1);
-		if(readReturn == -1){ printf("READ ERROR \n"); break; }
+		if(readReturn == -1){ 
+			//printf("READ ERROR \n"); 
+			break;
+		}
 		if(readReturn == 0){ break;	}
 		r_write(remote, &buf, 1);
 	}
@@ -55,9 +60,9 @@ int entry(int argc, char* argv[]){
 	close(local);
 	int closeReturn = r_close(remote);
 	if(closeReturn == -1){
-		printf("closeError\n");
+		//printf("closeError\n");
 	}
 
-	
+
 	return 0; //placeholder
 }

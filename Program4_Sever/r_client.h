@@ -2,6 +2,7 @@
  * Include r_client.h in any user program that needs
  * to call these functions.
  */
+int entry(int argc, char* argv[]);
 int r_open(const char *pathname, int flags, int mode);
 int r_close(int fd);
 int r_read(int fd, void *buf, int count);

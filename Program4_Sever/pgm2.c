@@ -1,5 +1,5 @@
 #include "r_client.h"
-#include "pgm.h"
+//#include "pgm.h"
 
 
 
@@ -32,7 +32,7 @@
  */
 int entry(int argc, char* argv[]){
 	
-	if(argc < 1){
+	if(argc < 5){
 		printf("Not Enough Arguments: ./pgm1 <hostname> <port> <intput> <output>");
 		return 0;
 	}
@@ -51,24 +51,24 @@ int entry(int argc, char* argv[]){
 
 	printf("Pipe return: %s \n", buffer);
 	*/
+
 	//Test dup2
-
-
+	/*
 	int remote = r_open(argv[3], O_RDWR, 0);
 	int test = r_dup2(remote, 1);
 
 	printf("TEST: %d \n", test);
-
+	*/
 
 
 	//submission 
-	/*
+	
 	int local = open(argv[4], O_RDWR | O_CREAT | O_APPEND, S_IRWXU | S_IRWXG | S_IRWXO);
 	
 	int remote = r_open(argv[3], O_RDWR, 0);
 	if(remote == -1){ 
-		printf("OPEN FAIL\n");
-		exit(1);
+		//printf("OPEN FAIL\n");
+		return 0;
 	}
 	r_lseek(remote, 10, SEEK_CUR);
 
@@ -76,11 +76,13 @@ int entry(int argc, char* argv[]){
 	int readReturn = 0;
 	while(1){
 		readReturn = r_read(remote, &buf, 1);
-		if(readReturn == -1){ printf("READ ERROR \n"); break; }
+		if(readReturn == -1){ 
+			//printf("READ ERROR \n");
+			break;
+		}
 		if(readReturn == 0){ break;	}
 		write(local, &buf, 1);
 	}
-	*/
 	
 	return 0; //placeholder
 }
