@@ -33,7 +33,7 @@
 int entry(int argc, char* argv[]){
 	
 	if(argc < 5){
-		printf("Not Enough Arguments: ./pgm1 <hostname> <port> <intput> <output>");
+		printf("Not Enough Arguments: ./pgm1 <hostname> <port> <intput> <output> \n");
 		return 0;
 	}
 		

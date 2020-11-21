@@ -31,7 +31,7 @@
 int entry(int argc, char* argv[]){
 	//you will call the r_ functions here.
 	if(argc < 5){
-		printf("Not Enough Arguments: ./pgm1 <hostname> <port> <intput> <output>");
+		printf("Not Enough Arguments: ./pgm1 <hostname> <port> <intput> <output> \n");
 		return 0;
 	}
 	int local = open(argv[3],  O_RDWR, 0);
@@ -40,7 +40,7 @@ int entry(int argc, char* argv[]){
 		return 0;
 	}
 
-	int remote = r_open(argv[4], O_RDWR | O_APPEND, S_IRWXU | S_IRWXG | S_IRWXO);
+	int remote = r_open(argv[4], O_RDWR | O_CREAT |O_APPEND, S_IRWXU | S_IRWXG | S_IRWXO);
 	if(remote == -1){ 
 		//printf("OPEN FAIL\n");
 		return 0;

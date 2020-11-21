@@ -67,13 +67,13 @@ int main(int argc, char *argv[]){
 	h = gethostbyname(remhost);
 	bcopy((char*)h->h_addr_list[0],  (char*) &remote.sin_addr, h->h_length);
 	remote.sin_port = htons(remport);
-	printf("attempting to connect, Host: %s  Port: %d \n", h->h_name, sock);
+	//printf("attempting to connect, Host: %s  Port: %d \n", h->h_name, sock);
 	
 	connect(sock, (struct sockaddr*) &remote, sizeof(remote));
-	printf("connected \n");
+	//printf("connected \n");
 	socketfd = sock;
 	entry(argc, argv);
-	printf("done\n");
+	//printf("done\n");
 	char end = EOF;
 	write(socketfd, &end, 1); //write end of file to close
 	return 0; // placeholder
@@ -110,8 +110,8 @@ int r_open(const char *pathname, int flags, int mode){
 	for(i = 0; i < u_l; i++){
 		msg[L++] = pathname[i]; 
 	}
-	printf("flag: %x \n", flags);
-	printf("mode: %x \n", mode);
+	//printf("flag: %x \n", flags);
+	//printf("mode: %x \n", mode);
 	//put the flags
 	msg[L++] = (flags >> 24) & 0xff;
 	msg[L++] = (flags >> 16) & 0xff;
@@ -124,12 +124,12 @@ int r_open(const char *pathname, int flags, int mode){
 	msg[L++] = (mode     ) & 0xff;
 	
 	
-	printf("0x");
-	for(int i = 0; i < 19; i++){
-		printf("%X ", msg[i]);
-	}
-	printf("\n");
-	printf("L: %d \n", L);
+	//printf("0x");
+	//for(int i = 0; i < 19; i++){
+	//	printf("%X ", msg[i]);
+	//}
+	//printf("\n");
+	//printf("L: %d \n", L);
 	
 	
 	
@@ -139,7 +139,7 @@ int r_open(const char *pathname, int flags, int mode){
 	//printf("read done\n");
 	in_msg = (result[0] << 24) | (result[1] << 16) | (result[2] << 8) | result[3];
 	in_err = (result[4] << 24) | (result[5] << 16) | (result[6] << 8) | result[7];
-	printf("%d\n", in_msg);
+	//printf("%d\n", in_msg);
 	//errno = in_err;
 	free(msg); //free msg
 
@@ -358,7 +358,7 @@ int r_pipe(int pipefd[2]){
 	//set pipefd
 	pipefd[0] = pipefd1;
 	pipefd[1] = pipefd2;
-	printf("pipefd1: %d, pipefd2: %d \n", pipefd1, pipefd2);
+	//printf("pipefd1: %d, pipefd2: %d \n", pipefd1, pipefd2);
 	errno = in_err;
 	return in_msg; // placeholder
 }

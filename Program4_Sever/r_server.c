@@ -1,5 +1,4 @@
 /* Add any includes needed*/
-#include "pgm.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -51,23 +50,23 @@ void c_open(int conn){
 	int mode = 0;
 	char tempbuff[4] = " ";
 
-	if(read(conn, tempbuff, 2) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 2) == -1) { perror("EXTRACTING ERROR\n"); }
 	length = (tempbuff[0] << 8) | (tempbuff[1]);
-	printf("length: %d \n", length);
+	//printf("length: %d \n", length);
 	
 	char* pathname = calloc(1, length);
 	
-	if(read(conn, pathname, length) == -1){ /*error time*/ };
-	printf("pathname: %s \n", pathname);
+	if(read(conn, pathname, length) == -1){ perror("EXTRACTING ERROR\n"); };
+	//printf("pathname: %s \n", pathname);
 	
 	
 
-	if(read(conn, tempbuff, 4) == -1){ /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1){ perror("EXTRACTING ERROR\n"); }
 	flags = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
-	printf("flags: %X \n", flags);
+	//printf("flags: %X \n", flags);
 	
 	
-	if(read(conn, tempbuff, 4) == -1){ /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1){ perror("EXTRACTING ERROR\n"); }
 	mode = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 	
 	/*
@@ -86,9 +85,9 @@ void c_open(int conn){
 	*/
 
 
-	printf("Open attempt: %s %x %x \n", pathname, flags, mode);
+	//printf("Open attempt: %s %x %x \n", pathname, flags, mode);
 	int fd = open(pathname, flags, mode);
-	printf("real open %d \n", fd);
+	//printf("real open %d \n", fd);
 	
 	error = errno;
 	//int test = open("Test.txt", 2, 0);
@@ -117,7 +116,7 @@ void c_close(int conn){
 	int fd = 0;
 	int error = 0;
 	char tempbuff[4] = " ";
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	fd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 
 	int closeResult = close(fd);
@@ -145,16 +144,16 @@ void c_read(int conn){
 	int count = 0;
 	char tempbuff[4] = " ";
 	//get fd
-	if(read(conn, tempbuff, 4) == -1) {/*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) {perror("EXTRACTING ERROR\n"); }
 	fd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 	//get count
-	if(read(conn, tempbuff, 4) == -1) {/*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) {perror("EXTRACTING ERROR\n"); }
 	count = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 
 	char* readData = calloc(1, count);
 	int readReturn = read(fd, readData, count);
 	if(readReturn == -1){
-		printf("read error\n");
+		perror("READING ERROR\n");
 		//error time
 	}
 	char* result = malloc(8 + readReturn);
@@ -165,7 +164,7 @@ void c_read(int conn){
 	result[L++] = (readReturn  >> 16) & 0xff;
 	result[L++] = (readReturn  >>  8) & 0xff;
 	result[L++] = (readReturn       ) & 0xff;
-	printf("Read Return: %d\n", readReturn);
+	//printf("Read Return: %d\n", readReturn);
 	//pharse error
 	error = errno;
 	result[L++] =	(error >> 24) & 0xff;
@@ -177,7 +176,7 @@ void c_read(int conn){
 	for(i = 0; i < readReturn; i++){
 		result[L++] = readData[i];
 	}
-	printf("Read from fd: %s \n", readData);
+	//printf("Read from fd: %s \n", readData);
 	write(conn, result, readReturn + 8);
 
 	free(readData);
@@ -192,15 +191,15 @@ void c_write(int conn){
 	char* writeData = malloc(count);
 	char tempbuff[4] = " ";
 	//read fd
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	fd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 	//read count
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	count = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 	//read data
-	if(read(conn, writeData, count) == -1) {/*error time*/ }
+	if(read(conn, writeData, count) == -1) { perror("EXTRACTING ERROR\n"); }
 
-	printf("write info: %x %x %s \n", fd, count, writeData);
+	//printf("write info: %x %x %s \n", fd, count, writeData);
 	int writeReturn = write(fd, writeData, count);
 
 	char result[8] = {" "};
@@ -230,18 +229,18 @@ void c_lseek(int conn){
 	int error = 0;
 	char tempbuff[4] = " ";
 	//get fd
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	fd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
-	printf("Lseek fd: %d \n", fd);
+	//printf("Lseek fd: %d \n", fd);
 	//get offset
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	offset = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
-	printf("Lseek offset: %d \n", offset);
+	//printf("Lseek offset: %d \n", offset);
 	//get whence
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	whence = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
-	printf("Lseek whence: %X \n", whence);
-	printf("seek info: %x %x %x \n", fd, offset, whence);
+	//printf("Lseek whence: %X \n", whence);
+	//printf("seek info: %x %x %x \n", fd, offset, whence);
 
 	int seekResponse = lseek(fd, offset, whence);
 	error = errno;
@@ -300,11 +299,11 @@ void c_dup2(int conn){
 	int newfd = 0;
 	int error = 0;
 	char tempbuff[4] = " ";
-	/*error time*/
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	oldfd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 
-	if(read(conn, tempbuff, 4) == -1) { /*error time*/ }
+	if(read(conn, tempbuff, 4) == -1) { perror("EXTRACTING ERROR\n"); }
 	newfd = (tempbuff[0] << 24) | (tempbuff[1] << 16) | (tempbuff[2] << 8) | tempbuff[3];
 	
 	int dupReturn = dup2(oldfd, newfd);
@@ -353,7 +352,7 @@ int main(int argc, char *argv[]){
 	//set up listen
 	
 	listen(listener, 5);
-	printf("listening \n");
+	//printf("listening \n");
 	length = sizeof(s2);
 
 
@@ -361,9 +360,9 @@ int main(int argc, char *argv[]){
 	//int status = 0;
 
 	while(1){
-		printf("waiting for accept \n");
+		//printf("waiting for accept \n");
 		conn = accept(listener, (struct sockaddr*) &s2, (socklen_t*) &length);
-		printf("Connection Accepted: %d \n", conn);
+		//printf("Connection Accepted: %d \n", conn);
 		
 		if(fork() == 0){
 			char type = 0;
@@ -375,19 +374,19 @@ int main(int argc, char *argv[]){
 				switch(type){
 					case open_call:
 						//sleep(5);
-						printf("Open Instruc\n");
+						//printf("Open Instruc\n");
 						c_open(conn);
 						break;
 					case close_call:
-						printf("Close Instruc\n");
+						//printf("Close Instruc\n");
 						c_close(conn);
 						break;
 					case read_call:
-						printf("Read Instruc\n");
+						//printf("Read Instruc\n");
 						c_read(conn);
 						break;
 					case write_call:
-						printf("write Instruc\n");
+						//printf("write Instruc\n");
 						c_write(conn);
 						break;
 					case seek_call:
@@ -402,8 +401,8 @@ int main(int argc, char *argv[]){
 				}
 				//read next instuction 
 				readReturn = read(conn, &type, 1);
-				if(readReturn == -1){ /* error time */ }
-				printf("end instruction\n\n");
+				if(readReturn == -1){ perror("INSTURCTION READ ERROR\n"); }
+				//printf("end instruction\n\n");
 			}
 			exit(1);
 			//return 0;
