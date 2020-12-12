@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -15,6 +16,8 @@
 #include <unistd.h>
 #include <errno.h>
  #include <sys/select.h>
+ #include <stdbool.h>
+ #include <poll.h>
 //Add any includes you require.
 
 /* main - implementation of filter
@@ -53,7 +56,7 @@
 
 
 //mode and maxline output
-pid_t childPid;
+pid_t storePid;
 char mode;
 int maxLine;
 //global fd's
@@ -63,10 +66,12 @@ int parentRead; //for parent where child outputs are read from
 int parentWrite; //for parent where it writes to child
 int largestFD; //largest fd for select
 int childErrorOut; //
+bool childHasDied;
+int commandCalled;
 
 
 //Handle childoutputs
-//NEED TO IMPLEMENT MAX LINE
+//NEEDED IF CALLING IN OUTPUT COMMAND: OUTDATED
 int HandleChildOut(){
 	char buff[1];
 	int l;
@@ -86,9 +91,7 @@ int HandleChildOut(){
 			write(1, buff, l);
 			//printf("after Write\n");
 		}
-		//return 1 is ther is a need to say more
-		//printf("line %d \n", line);
-		//printf("stuck here\n");
+		
 		if(line >= maxLine){
 			return 1; //more lines to read
 		}else{
@@ -98,48 +101,65 @@ int HandleChildOut(){
 	return 0;
 }
 
-
-//TODO:: NEED TO FINISH HANDLE COMMAND
 //TODO:: MAKE IT COMMANDS WITH RANDOM SHIT AT THE END DONT WORK (ie: /i jk  or /o /i)
 void HandleCommand(char* buff){
 	char command = buff[1];
+	char extra[10] = "";
+	int i = 0;
+	for(i = 0; i < 10; i++){
+		if(buff[i+3] <= '9' || buff[i+3] >= '0'){
+			extra[i] = buff[i+3];
+		}else{
+			break;
+		}
+	} 
 	
+
+	commandCalled = 1;
+	int temp;
 	switch (command){
 	case 'i':
 		mode = INPUTMODE;
 		printf("Change to input mode %d \n", mode);
 		break;
 	case 'o': 
-		mode = OUTMODE;
-		//int more = HandleChildOut();
-		//printf("here \n");
-		//if(more == 1){
-		//	printf("%d %c more #\n", childPid, mode);
-		//}else{
-		//	printf("%d %c #\n", childPid, mode);
-		//}
-		
+		mode = OUTMODE;		
 		break;
 	case 'c':
 		mode = COMMANDMODE;
 		printf("Change to command mode %d \n", mode);
 		break;
 	case 'm':
-		maxLine = atoi(&buff[3]);
-
+		//check if there is even a number	
+		temp = atoi(extra);
+		//printf("temp: %d\n", temp);
+		if(temp == 0){
+			printf("Invialid or No arugment given: /m <Integer>\n");
+		}else{
+			maxLine = temp;
+		}
+		//printf("new Maxline: %d\n", maxLine);
 		break;
 	case 'k':
+		temp = atoi(extra);
+		if(temp == 0){
+			printf("Invialid or No arugment given: /k <Integer>\n");
+		}else{
+			printf("signal sent: %d, to: %d\n", temp, storePid);
+			kill(storePid, temp);
+		}
+		
 		//signal send
 		break;
 	case '/':
 		write(parentWrite, "/", 1);
 		break;
 	default:
-		printf("/%c is an incorrect command \n", buff[1]);
+		commandCalled = 0;
+		printf("Incorrect Command Given:\n");
 	}
 }
 
-//INSERT REST OF MODES WHEN INPUT IS GIVEN
 void HandleStdIn(){
 	char buff[128] = {" "};
 	int l = 0;
@@ -147,24 +167,30 @@ void HandleStdIn(){
 	l = read(0, buff, sizeof(buff));
 	//printf("read from buf: %s childin Fd: %d \n", buff, childIn);
 	//fflush(stdout);
-	printf("read length: %d\n",l);
+	//printf("read length: %d\n",l);
 	//write(parentWrite, buff, l);
 	switch (mode){
 	case COMMANDMODE:
 		if(buff[0] == '/'){ 
 			HandleCommand(buff);
+		}else{
+			printf("Input blocked: Currently in Command mode\n");
 		}
 		break;
 	case INPUTMODE:
 		if(buff[0] == '/' && buff[1] != '/'){ 
 			HandleCommand(buff);
+		}else if(buff[1] == '/'){
+			write(parentWrite, buff+1, l);
 		}else{
 			write(parentWrite, buff, l);
 		}
 		break;
 	case OUTMODE:
 		if(buff[0] == '/' && buff[1] != '/'){ 
-			HandleCommand(buff);
+			HandleCommand(buff);	
+		}else if(buff[1] == '/'){
+			write(parentWrite, buff+1, l);
 		}else{
 			write(parentWrite, buff, l);
 		}
@@ -173,9 +199,6 @@ void HandleStdIn(){
 	default:
 		break;
 	}
-
-
-
 }
 
 
@@ -185,7 +208,9 @@ int main(int argc, char *argv[]){
 		printf("More Arguments Nedded, ./filter <program> <arguments> \n");
 		return 0;
 	}
-
+	int status;
+	commandCalled = 0;
+	childHasDied = false;
 	mode = COMMANDMODE;
 	maxLine = 2;
 	//setup pipes 
@@ -200,56 +225,65 @@ int main(int argc, char *argv[]){
 	childIn = inputFd[0];
 	childOut = outputFd[1];
 	parentRead = outputFd[0];
-	//set this descriptor to nonblock to allow pipes to stop reading
-	if(fcntl(parentRead, F_SETFL, O_NONBLOCK) == -1){
-		printf("nonblock fail\n");
-		return 0;
-	}
 	parentWrite = inputFd[1];
 	childErrorOut = errorFd[1];
 	largestFD = errorFd[1];
 
 	//fork program
 	pid_t pid = fork();
+	storePid = pid;
 	if(pid == 0){
 		//child process
 		char* programName = argv[1];
 		//change pipes over
-		dup2(childIn, 0);
-		dup2(childOut, 1);
-		dup2(errorFd[0], 2);
+		dup2(childIn, STDIN_FILENO);
+		dup2(childOut, STDOUT_FILENO);
+		dup2(errorFd[1], STDERR_FILENO);
 		//get child PID
-		childPid = getppid();
-		
-		execvp(programName, &argv[1]); // &argv[1] is fun 
+		//childPid = getppid();
+
+		//try pathname first (for self made)
+		execv(programName, &argv[1]); // &argv[1] is fun 
+		//then file (for standard systems like cat)
+		execvp(programName, &argv[1]);
 		printf("failed to open\n");
+		exit(-1);
 		
 	}else{
 		//set up varaibles
 		int r;
 		//int readReturn = 0;
 		fd_set rds;
-		printf("%d\n",childPid);
+		//printf("%d\n",pid);
 		//fd_set wts;
-
+		int more;
 		while(1){
-
+			more = 0;
+			commandCalled = 0;
 			//prepare descriptors
 			FD_ZERO(&rds);
 			FD_SET(0, &rds);
 			FD_SET(parentRead, &rds);
-			FD_SET(childErrorOut, &rds);
 			
+			
+			FD_SET(errorFd[0], &rds);
+
 			r = select(largestFD+1, &rds, 0, 0, NULL);
 			//printf("Select Unblocked \n");
-			fflush(stdout);
-			if(FD_ISSET(childErrorOut, &rds)){
+			//fflush(stdout);
+			
+
+
+			if(FD_ISSET(errorFd[0], &rds)){
 				printf("child error ready \n");
-				//implement 
+				char buff[128];
+				int errorReturn = read(errorFd[0], buff, sizeof(buff));
+				write(STDERR_FILENO, buff, errorReturn);
+				//perror(buff);
 			}
 
 			if(FD_ISSET(0,&rds)){
-				printf("stdin is set \n");
+				//printf("stdin is set \n");
 				HandleStdIn();
 			}
 			
@@ -260,31 +294,52 @@ int main(int argc, char *argv[]){
 				int readReturn = 0;
 				char buff[2];
 				
-				
-				
 				while(1){
 					readReturn = 0;
 					//printf("before read \n");
-					readReturn = read(parentRead, buff, 1);					
+					if (poll(&(struct pollfd){ .fd = parentRead, .events = POLLIN }, 1, 0)==1) {
+						//printf("can you read at all dude\n");
+    					readReturn = read(parentRead, buff, 1);	
+					}else{
+						break;
+					}	
+									
 					//printf("ReadReturn: %d\n", readReturn);
 					if(readReturn == 0 || readReturn == -1){ break; }
 					//printf("buff[0]: %x \n", buff[0]);
 					if(buff[0] == '\n'){ lines++; }
 					write(1, buff, readReturn);
-					if(lines >= maxLine){
+					if(lines >= maxLine && poll(&(struct pollfd){ .fd = parentRead, .events = POLLIN }, 1, 0)==1){ //check if there is anything left in thing
+						more = 1;
 						break;
 					}
 					
 				}
-				printf("done\n");
-				if(lines >= maxLine){
+				//printf("done\n");
+				if(lines >= maxLine && more == 1 ){
 					mode = COMMANDMODE;
 				}
-				
-				
+			}
+			if (waitpid(storePid, &status, WNOHANG) == -1 && childHasDied == false) {
+				char foo[59];
+				sprintf(foo, "The child %d has terminated with code %d\n", storePid, status);
+   				//printf("The child %d has terminated with code %d\n", storePid, status);
+				int i = 0;
+				for(i = 0; i < 59; i++){
+					if(foo[i] == 0){ break; }
+					write(STDERR_FILENO, &foo[i], 1);
+				}
+    			childHasDied = true;
+				//exit(status);
 			}
 
-
+			if(commandCalled){
+				printf("%d %c", pid, mode);
+				if(more){
+					printf(" more");
+				}
+				printf(" #\n");
+			}
 			//readReturn = read(0, buff, 8);
 			//readReturn = write(parentWrite, buff, readReturn);
 			//readReturn = read(parentRead, buff, readReturn);
