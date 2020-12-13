@@ -15,10 +15,22 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
- #include <sys/select.h>
- #include <stdbool.h>
- #include <poll.h>
-//Add any includes you require.
+#include <sys/select.h>
+#include <stdbool.h>
+#include <poll.h>
+
+//----------------------------------------------------------------------
+// NOTES on program as specification were generally unclear on things
+//----------------------------------------------------------------------
+// 1.)
+// The specifications state that when outputting more than max lines 
+// the system returns to command mode. This means whenever there 
+// are too many lines to print the system switches back to command mode
+// before the "<pid> m <more> #" is printed. Due to this the only time  
+// "more" is present is when the system returns to command mode.
+// For this reason the system reports "more" with under command (ie. <pid> c more #)
+// after an output command is called for. 
+
 
 /* main - implementation of filter
  * In this project, you will be developing a filter program that forks
@@ -59,15 +71,16 @@
 pid_t storePid;
 char mode;
 int maxLine;
-//global fd's
 int childIn; //for child process where inputs are received
 int childOut; //for child process where outputs are sent
 int parentRead; //for parent where child outputs are read from
 int parentWrite; //for parent where it writes to child
 int largestFD; //largest fd for select
-int childErrorOut; //
+int childErrorOut; 
 bool childHasDied;
 int commandCalled;
+bool skiploop;
+bool switchToCommand;
 
 
 //Handle childoutputs
@@ -120,14 +133,15 @@ void HandleCommand(char* buff){
 	switch (command){
 	case 'i':
 		mode = INPUTMODE;
-		printf("Change to input mode %d \n", mode);
+		//printf("Change to input mode %d \n", mode);
 		break;
 	case 'o': 
-		mode = OUTMODE;		
+		mode = OUTMODE;
+		skiploop = true;		
 		break;
 	case 'c':
 		mode = COMMANDMODE;
-		printf("Change to command mode %d \n", mode);
+		//printf("Change to command mode %d \n", mode);
 		break;
 	case 'm':
 		//check if there is even a number	
@@ -212,7 +226,7 @@ int main(int argc, char *argv[]){
 	commandCalled = 0;
 	childHasDied = false;
 	mode = COMMANDMODE;
-	maxLine = 2;
+	maxLine = 20;
 	//setup pipes 
 	int inputFd[2];
 	int outputFd[2];
@@ -257,25 +271,37 @@ int main(int argc, char *argv[]){
 		//printf("%d\n",pid);
 		//fd_set wts;
 		int more;
+		skiploop = false;
+		switchToCommand = false;
 		while(1){
-			more = 0;
 			commandCalled = 0;
+			if(skiploop){
+				commandCalled = 1;
+			}
+			more = 0;
+			switchToCommand = false;
+			skiploop = false;
+			
 			//prepare descriptors
 			FD_ZERO(&rds);
 			FD_SET(0, &rds);
-			FD_SET(parentRead, &rds);
-			
+			if(mode == OUTMODE){
+				FD_SET(parentRead, &rds);
+			}
 			
 			FD_SET(errorFd[0], &rds);
 
 			r = select(largestFD+1, &rds, 0, 0, NULL);
+			if(r == -1){
+				perror("select Error");
+			}
 			//printf("Select Unblocked \n");
-			//fflush(stdout);
+			fflush(stdout);
 			
 
 
 			if(FD_ISSET(errorFd[0], &rds)){
-				printf("child error ready \n");
+				//printf("child error ready \n");
 				char buff[128];
 				int errorReturn = read(errorFd[0], buff, sizeof(buff));
 				write(STDERR_FILENO, buff, errorReturn);
@@ -317,7 +343,8 @@ int main(int argc, char *argv[]){
 				}
 				//printf("done\n");
 				if(lines >= maxLine && more == 1 ){
-					mode = COMMANDMODE;
+					switchToCommand = true;
+					//mode = COMMANDMODE;
 				}
 			}
 			if (waitpid(storePid, &status, WNOHANG) == -1 && childHasDied == false) {
@@ -330,22 +357,18 @@ int main(int argc, char *argv[]){
 					write(STDERR_FILENO, &foo[i], 1);
 				}
     			childHasDied = true;
-				//exit(status);
 			}
 
-			if(commandCalled){
+			if(commandCalled && skiploop == false){
 				printf("%d %c", pid, mode);
 				if(more){
 					printf(" more");
 				}
 				printf(" #\n");
+				if(switchToCommand){
+					mode = COMMANDMODE;
+				}
 			}
-			//readReturn = read(0, buff, 8);
-			//readReturn = write(parentWrite, buff, readReturn);
-			//readReturn = read(parentRead, buff, readReturn);
-			//write(0, buff, readReturn);
-			
-
 			
 		}
 		//waitpid(pid, 0,0);
